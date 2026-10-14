@@ -1,0 +1,42 @@
+# "Dense" baseline (paper App. "Dense Preference Reward"): one state-only reward
+# model r(s) trained with Bradley-Terry on whole-episode success preferences,
+# pretrained on demos + policy rollouts, fine-tuned online (PEBBLE), and used in
+# place of the env reward for the sparse backbone (OGPO / FQL / SAC).
+#
+# Values are the ones in OGPO-pbrl-baseline/paper_experiments/pbrl/*_preference.sh.
+
+reward_model:
+  baseline: dense
+  label_mode: success_only
+  online_enabled: true
+
+# Per-task overrides keyed by envs.subgoals.task_key(env_name); applied after this
+# preset and before the run's own reward_model section. Rollout paths are the
+# cluster files the reference runs used. The /data paths could not be checked
+# from the login node.
+task_overrides:
+  tool_hang:
+    train_batch_size: 32
+    # FQL-ToolHang runs; OGPO-ToolHang used .../mehulg/qipm/preference-dataset/toolhang_rollouts
+    rollout_dataset_path: /home/ssaxena2/OGPO/preference_data/toolhang_rollouts.h5
+  transport:
+    train_batch_size: 128           # OGPO-Transport; the FQL-Transport run used 32 (+ online_large_batch 64, online_relabel_chunk 16384)
+    rollout_dataset_path: /data/group_data/maxlab/common_datasets/mehulg/qipm/preference-dataset/transport_rollouts
+  ArrangeTea:
+    train_batch_size: 16            # the reference ArrangeTea script used train_epochs: 1 (all other tasks 50)
+    rollout_dataset_path: /data/group_data/maxlab/common_datasets/mehulg/qipm/preference-dataset/robocasa-arrangetea
+  LoadDishwasher:
+    train_batch_size: 16
+    rollout_dataset_path: /home/ssaxena2/OGPO/preference_data/loaddishwasher_rollouts.h5
+  PreSoakPan:
+    train_batch_size: 16
+    rollout_dataset_path: /home/ssaxena2/OGPO/preference_data/presoakpan_mixed_rollouts.h5
+  KITCHEN_SCENE3:
+    train_batch_size: 32
+    rollout_dataset_path: /data/group_data/maxlab/common_datasets/skowshik/qipm_trajectories_libero10/stove_mokapot
+  KITCHEN_SCENE4:
+    train_batch_size: 32
+    rollout_dataset_path: /data/group_data/maxlab/common_datasets/skowshik/qipm_trajectories_libero10/bowl_drawer
+  KITCHEN_SCENE6:
+    train_batch_size: 32
+    rollout_dataset_path: /data/group_data/maxlab/common_datasets/skowshik/qipm_trajectories_libero10/mug_microwave

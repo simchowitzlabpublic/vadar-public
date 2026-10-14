@@ -1,0 +1,8 @@
+# OGPO + VaDaR. VaDaR defaults are in common.yaml (weighting, vadar_critic, ...).
+_base_: ogpo.yaml
+
+experiment:
+  project: VaDaR-OGPO
+
+agent:
+  agent_name: ogpo_vadar

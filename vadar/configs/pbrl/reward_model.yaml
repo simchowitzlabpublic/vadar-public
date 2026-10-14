@@ -1,0 +1,63 @@
+# Preference-based reward baselines ("Dense" and "Pref-Subgoal").
+#
+# These defaults are merged UNDER a preset (dense.yaml / pref_subgoal.yaml) and
+# the run's own `reward_model:` section / CLI overrides, by
+# vadar.rewards.config.resolve_reward_model_config. They are not part of
+# configs/algos/*.yaml, so the base algorithms are unaffected unless
+# `reward_model.baseline` is set.
+#
+# Ported from OGPO-pbrl-baseline (branch pbrl-baseline-runs) and
+# OGPO-pbrl-subgoal (branch pbrl-subgoal-gated @ 66affb3 + working-tree padding fix).
+
+reward_model:
+  baseline: null                    # null (off) | dense | pref_subgoal
+
+  # ---- Reward network: ensemble of MLPs r(s) or r(s, g) (state-only) ----
+  ensemble_size: 3
+  hidden_dim: 512
+  n_layers: 4                       # leaky-relu hidden layers, tanh output in [-1, 1]
+  lr: 3.0e-4
+
+  # ---- Offline pretraining on episode-pair preferences ----
+  train_batch_size: 128             # pairs per Bradley-Terry step
+  train_epochs: 50
+  val_fraction: 0.1                 # episode-level holdout for the val metrics
+  all_pairs: true                   # enumerate every C(N,2) episode pair (ties dropped)
+  reward_dataset_scale: 16          # pairs = N_eps * scale when all_pairs=false
+  feed_type: 0                      # 0 = uniform pairs, 1 = + disagreement-selected pairs
+  disagreement_oversample: 10
+  min_offline_pairs: 1000           # the reference asserted > 1000 surviving pairs
+  discount: null                    # MC-return discount for label_mode=success_return (null = agent discount)
+
+  # Flat (Dense) labels. success_only: success beats failure, same-success pairs dropped.
+  # success_return: success first, then summed discounted MC return of env rewards.
+  label_mode: success_only
+
+  # Pref-Subgoal labels, per subgoal i. success_time: an episode that completes i
+  # beats one that does not; between two that do, the earlier completion wins.
+  # success_only: achiever vs non-achiever only (degenerate on all-success demos).
+  subgoal_label_mode: success_time
+
+  # ---- Pref-Subgoal reward aggregation ----
+  # r(s_t, d_{t+1}) = sum_g w(d_{t+1})[g] * r(s_t, e_g) + subgoal_done_bonus * sum_g d_{t+1}[g]
+  weighting: next_future            # VaDaR weightings: next_future | current_future | current_myopic | next_myopic | last
+  subgoal_dag: null                 # null = sequential chain; "spec" = DAG from envs.subgoals; or {g: [prereqs]}
+  subgoal_done_bonus: 0.0           # 2.0 in the first runs made stalling optimal (see vadar/rewards/__init__.py)
+
+  # ---- Extra trajectories for pretraining (Dense only in the reference) ----
+  rollout_dataset_path: null        # .h5/.hdf5/.npz file or a directory of them (scripts/pbrl/collect_preference_rollouts.py)
+
+  # ---- Reuse a reward model ----
+  pretrained_checkpoint_path: null  # dir holding reward_model.pkl (+ optional pref_buffer.pkl)
+  freeze_pretrained: false          # true: no pretraining and no online updates
+
+  # ---- Online PEBBLE-style updates ----
+  online_enabled: true
+  online_num_interact: 5000         # env steps between reward-model updates
+  online_feedback_batch: 128        # new pairs per update (split evenly over subgoals in pref_subgoal)
+  online_max_feedback: 36000        # FIFO cap on online pairs (offline pairs are never evicted)
+  online_train_epochs: 1            # epochs over offline + online pairs per update
+  online_large_batch: 128           # batch size of the online fine-tuning
+  online_sampling: uniform          # uniform | disagreement
+  online_relabel_chunk: 65536       # replay-buffer relabel chunk (memory knob)
+  env_max_episode_length: null      # online episodes are padded to max(offline, this); null = infer from env
