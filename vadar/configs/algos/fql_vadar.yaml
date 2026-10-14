@@ -1,0 +1,8 @@
+# FQL + VaDaR. VaDaR defaults are in common.yaml (weighting, vadar_critic, td_target, ...).
+_base_: fql.yaml
+
+experiment:
+  project: VaDaR-FQL
+
+agent:
+  agent_name: fql_vadar

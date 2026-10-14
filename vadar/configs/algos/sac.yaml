@@ -1,0 +1,49 @@
+# =============================================================================
+# SAC (sparse baseline) — ported from the QIPM fork's configs/algos/sac.yaml.
+# Agent: vadar/agents/sac.py (SACAgent). Method presets live elsewhere.
+# =============================================================================
+
+_base_: common.yaml
+
+experiment:
+  project: SAC
+
+buffer:
+  q_warmup_mode: interleaved   # the QIPM fork's SAC warmup: critic-only updates inside the main loop
+
+training:
+  bc_pi_steps: 500000        # fork: offline_steps
+  calql_steps: 0
+  q_warmup_steps: 50000
+  bc_refine_steps: 0
+  online_steps: 1000000
+
+bc:
+  clip_bc: false
+
+success_buffer:
+  use_success_buffer: false
+
+agent:
+  agent_name: sac
+  best_of_n: 1               # required by the runner, unused by SAC
+  critic_loss_type: mse
+  # (lr, tau, q_agg, num_qs, discount, init_temperature, target_entropy,
+  #  entropy_backup come from common.yaml.)
+
+  # Goal-conditioned observations (HGC / iHGC / HER). `goal_obs` must match the
+  # env's subgoal_cfg goal_obs; the last goal_dim (default num_subgoals) obs
+  # dims are the goal.
+  goal_obs: null
+  goal_conditioned_actor: true
+  goal_conditioned_critic: true
+  goal_embed_dim: 32
+  num_subgoals: null
+  goal_dim: null             # HER 'state'/'latent' goals: goal-space width
+
+  # MIP-Q (off by default)
+  use_mip_q: false
+  mip_q_ensemble: true
+  mip_q_noise_scale: 1.0
+  mip_q_t_star: 0.9
+  num_ensemble_members: 10

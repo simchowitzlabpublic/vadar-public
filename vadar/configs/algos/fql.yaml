@@ -1,0 +1,23 @@
+# =============================================================================
+# FQL (Flow Q-Learning) as implemented in upstream OGPO: the OGPO agent in
+# one-step mode. The flow policy is trained by BC only; a one-step policy is
+# distilled from it and maximizes Q; the one-step policy acts and provides TD
+# targets. Settings follow scripts/fql/*.sh and the paper's FQL runs.
+# =============================================================================
+
+_base_: ogpo.yaml
+
+experiment:
+  project: FQL
+
+agent:
+  agent_name: fql
+  bc_coeff: 1.0
+  best_of_n: 8
+  use_one_step_policy: true
+  train_one_step_in_offline: true
+  train_one_step_in_online: true
+  fql_distillation_coeff: 1000.0
+  fql_train_main_policy: false
+  use_one_step_for_targets: true
+  use_one_step_for_rollouts: true

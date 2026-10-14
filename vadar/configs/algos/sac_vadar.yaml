@@ -1,0 +1,33 @@
+# =============================================================================
+# SAC + VaDaR — ported from the QIPM fork's configs/algos/sac_qipm.yaml.
+# Agent: vadar/agents/sac_vadar.py (SACVadarAgent). Method presets live elsewhere.
+# =============================================================================
+
+_base_: sac.yaml
+
+experiment:
+  project: SAC_VaDaR
+
+buffer:
+  q_warmup_mode: interleaved   # the QIPM fork's SAC warmup: critic-only updates inside the main loop
+
+training:
+  q_warmup_steps: 10000
+
+agent:
+  agent_name: sac_vadar
+
+  num_subgoals: null          # filled from envs/subgoals.py
+  vadar_critic: goal_conditioned    # goal_conditioned (Q(s,a,g)) | vector | separate
+                                    # (the fork's sac_qipm default critic was `vector`)
+  weighting: next_future            # NF | CF | GM | NM | last | constant
+  subgoal_dag: null                 # {subgoal: [prerequisites]}; null = sequential chain
+  subgoal_weights: null             # (G,) weights for weighting=constant
+  td_target: gated                  # gated | clipped
+  subgoal_head_types: null          # e.g. [subgoal, cost] for PushT obstacle avoidance
+  # The fork's SAC-QIPM ignored per-subgoal discounts; keep false to match it.
+  use_subgoal_discounts: false
+  subgoal_discounts: null
+  # With entropy_backup, temp * log_pi(a'|s') is subtracted from every subgoal's
+  # next value; false matches the fork's SAC-QIPM.
+  entropy_backup: false

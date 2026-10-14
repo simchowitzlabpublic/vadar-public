@@ -1,0 +1,34 @@
+# "Pref-Subgoal" baseline (paper Sec. "TD critic learning outperforms
+# preference-based per-subgoal reward"): one reward ensemble r(s, g) conditioned
+# on a one-hot subgoal, trained with per-subgoal Bradley-Terry preferences
+# derived from subgoal_dones, aggregated per step with VaDaR's next-future
+# weighting, and used in place of the env reward to train the scalar critic of
+# the sparse backbone (OGPO / FQL).
+#
+# Final configuration of OGPO-pbrl-subgoal: weighting next_future
+# (fork: gating_mode=grandparent_future), subgoal_label_mode success_time,
+# subgoal_done_bonus 0.0 (the bonus=0 rerun; the launch scripts default to 2.0
+# and the sbatch_*_maxlab.sh wrappers override it to 0.0), sequential weighting
+# (subgoal_dag null; no DAG run was launched), demos only (no rollout data).
+
+reward_model:
+  baseline: pref_subgoal
+  label_mode: success_only          # unused by pref_subgoal (labels come from subgoal_label_mode)
+  subgoal_label_mode: success_time
+  weighting: next_future
+  subgoal_dag: null
+  subgoal_done_bonus: 0.0
+  rollout_dataset_path: null
+  online_enabled: true
+
+task_overrides:
+  tool_hang:
+    train_batch_size: 32            # FQL-ToolHang run (the unlaunched OGPO-ToolHang script used 128)
+  transport:
+    train_batch_size: 128           # script exists but was never launched
+  ArrangeTea:
+    train_batch_size: 16
+  LoadDishwasher:
+    train_batch_size: 16
+  PreSoakPan:
+    train_batch_size: 16
